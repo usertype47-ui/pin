@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>客戶資料管理系統 (新增 / 修改)</title>
+    <title>客戶資料管理系統 (新增 / 修改 / 設定)</title>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -13,7 +13,8 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-main: #e2e8f0;
             --accent: #60a5fa;
-            --mod-accent: #f59e0b; /* 修改區塊的主色調(橘黃色) */
+            --mod-accent: #f59e0b; /* 修改區塊主色 */
+            --set-accent: #8b5cf6; /* 設定區塊主色(紫色) */
             --bg-color: #0f172a;
             --success: #10b981;
         }
@@ -31,7 +32,6 @@
             overflow-x: hidden;
         }
 
-        /* 左右雙欄位排版容器 */
         .main-wrapper {
             display: flex;
             flex-wrap: wrap;
@@ -53,6 +53,12 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
+        /* 讓設定卡片可以佔滿整行 */
+        .settings-card {
+            flex: 1 1 100%;
+            max-width: 1300px;
+        }
+
         h2 {
             text-align: center;
             color: white;
@@ -63,6 +69,7 @@
 
         .add-title { border-bottom: 2px solid var(--accent); }
         .mod-title { border-bottom: 2px solid var(--mod-accent); }
+        .set-title { border-bottom: 2px solid var(--set-accent); }
 
         .form-group {
             display: flex;
@@ -77,6 +84,7 @@
 
         .add-card label { color: var(--accent); }
         .mod-card label { color: var(--mod-accent); }
+        .settings-card label { color: var(--set-accent); }
 
         input[type="text"], input[type="date"], input[type="number"], select, input[type="file"] {
             padding: 10px;
@@ -89,17 +97,10 @@
             transition: 0.3s;
         }
 
-        .add-card input:focus, .add-card select:focus {
-            border-color: var(--accent);
-            background: rgba(255,255,255,0.1);
-        }
+        .add-card input:focus, .add-card select:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); }
+        .mod-card input:focus, .mod-card select:focus { border-color: var(--mod-accent); background: rgba(255,255,255,0.1); }
+        .settings-card input:focus { border-color: var(--set-accent); background: rgba(255,255,255,0.1); }
 
-        .mod-card input:focus, .mod-card select:focus {
-            border-color: var(--mod-accent);
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* 特別強調修改區的客戶選單 */
         #mod-select {
             border: 1px solid var(--mod-accent);
             background: rgba(245, 158, 11, 0.1);
@@ -128,6 +129,9 @@
         .btn-mod { background: var(--mod-accent); }
         .btn-mod:hover { background: #d97706; box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
 
+        .btn-set { background: var(--set-accent); }
+        .btn-set:hover { background: #7c3aed; box-shadow: 0 0 15px rgba(139, 92, 246, 0.5); }
+
         .btn-csv { background: var(--success); margin-top: 10px; }
         .btn-csv:hover { background: #059669; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
 
@@ -143,6 +147,13 @@
             margin: 30px 0 20px 0;
             padding-top: 20px;
         }
+
+        .flex-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .flex-row .form-group { flex: 1; min-width: 200px; }
 
         @media (max-width: 850px) {
             .form-card { min-width: 100%; }
@@ -215,7 +226,7 @@
         </div>
         <div class="form-group">
             <label>訂單活躍度</label>
-            <input type="text" id="fd-activity" class="readonly-field" readonly placeholder="系統依據日期自動判斷">
+            <input type="text" id="fd-activity" class="readonly-field" readonly placeholder="系統依據設定自動判斷">
         </div>
         <div class="form-group">
             <label>下次拜訪日</label>
@@ -237,7 +248,6 @@
             <button class="btn btn-csv" onclick="importCSV()">解析並批次匯入至資料庫</button>
         </div>
     </div>
-
 
     <div class="form-card mod-card">
         <h2 class="mod-title">✏️ 修改客戶資料</h2>
@@ -311,7 +321,7 @@
         </div>
         <div class="form-group">
             <label>訂單活躍度</label>
-            <input type="text" id="mod-activity" class="readonly-field" readonly placeholder="系統依據日期自動判斷">
+            <input type="text" id="mod-activity" class="readonly-field" readonly placeholder="系統依據設定自動判斷">
         </div>
         <div class="form-group">
             <label>下次拜訪日</label>
@@ -324,10 +334,33 @@
 
         <button class="btn btn-mod" onclick="updateData()">儲存更新</button>
     </div>
+
+    <div class="form-card settings-card">
+        <h2 class="set-title">⚙️ 系統設定 (活躍度計算邏輯)</h2>
+        <p style="color: #94a3b8; font-size: 0.95rem; margin-top: -15px; margin-bottom: 20px; text-align: center;">此處的變更將會全系統同步，並即時影響活躍度狀態判定。</p>
+        
+        <div class="flex-row">
+            <div class="form-group">
+                <label>㊗️ 固定下單 (未滿天數)</label>
+                <input type="number" id="set-fixed" placeholder="預設: 10">
+            </div>
+            <div class="form-group">
+                <label>🟢 正常下單 (未滿天數)</label>
+                <input type="number" id="set-normal" placeholder="預設: 30">
+            </div>
+            <div class="form-group">
+                <label>🔴 久未下單 (大於等於天數)</label>
+                <input type="number" id="set-inactive" placeholder="預設: 60">
+            </div>
+        </div>
+
+        <button class="btn btn-set" onclick="saveActivityConfig()">儲存邏輯設定至資料庫</button>
+    </div>
+
 </div>
 
 <script>
-    // ======= Firebase 配置 (請替換為您的參數) =======
+    // ======= Firebase 配置 =======
     const firebaseConfig = {
         apiKey: "AIzaSyAvLmHzZK6HwMLJFo3JyzY_T_azpElk1Lc",
         authDomain: "beautiful-68dbc.firebaseapp.com",
@@ -338,15 +371,62 @@
         appId: "1:348466975949:web:1f6f5483ce3c0f91a34584"
     };
 
-    // 初始化 Firebase 與 Firestore
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    // ===============================================
 
-    // 全域變數存放抓取的客戶資料
+    // ======= 全域變數 =======
     let allCustomers = [];
+    // 預設的活躍度天數配置 (會在載入時被雲端資料覆蓋)
+    let actConfig = { fixed: 10, normal: 30, inactive: 60 };
 
-    // 載入所有客戶名單 (建立下拉選單)
+    // ==================== 邏輯設定功能 ====================
+    // 從 Firebase 載入最新的計算邏輯
+    async function loadActivityConfig() {
+        try {
+            const doc = await db.collection('settings').doc('activity_logic').get();
+            if (doc.exists) {
+                actConfig = doc.data();
+                document.getElementById('set-fixed').value = actConfig.fixed;
+                document.getElementById('set-normal').value = actConfig.normal;
+                document.getElementById('set-inactive').value = actConfig.inactive;
+            } else {
+                // 如果是第一次使用，建立預設值
+                document.getElementById('set-fixed').value = actConfig.fixed;
+                document.getElementById('set-normal').value = actConfig.normal;
+                document.getElementById('set-inactive').value = actConfig.inactive;
+                await db.collection('settings').doc('activity_logic').set(actConfig);
+            }
+        } catch (err) {
+            console.error("載入邏輯設定失敗: ", err);
+        }
+    }
+
+    // 儲存修改後的邏輯至 Firebase
+    async function saveActivityConfig() {
+        const fixed = parseInt(document.getElementById('set-fixed').value) || 10;
+        const normal = parseInt(document.getElementById('set-normal').value) || 30;
+        const inactive = parseInt(document.getElementById('set-inactive').value) || 60;
+
+        // 防呆機制：天數大小邏輯必須合理
+        if (fixed >= normal || normal >= inactive) {
+            alert("⚠️ 邏輯錯誤：天數設定必須為『固定 < 正常 < 久未下單』！");
+            return;
+        }
+
+        try {
+            await db.collection('settings').doc('activity_logic').set({
+                fixed: fixed,
+                normal: normal,
+                inactive: inactive
+            });
+            alert("✅ 活躍度計算邏輯已成功同步至資料庫！");
+            window.location.reload(); // 重新載入以套用最新邏輯
+        } catch (err) {
+            alert("❌ 儲存設定失敗：" + err.message);
+        }
+    }
+
+    // ==================== 客戶資料載入與計算 ====================
     async function loadCustomers() {
         const select = document.getElementById('mod-select');
         try {
@@ -360,7 +440,6 @@
                 
                 const opt = document.createElement('option');
                 opt.value = doc.id;
-                // 下拉選單顯示：客戶簡稱 (公司名稱)
                 opt.textContent = `${data.name || '無簡稱'} (${data.company || '無公司名'})`;
                 select.appendChild(opt);
             });
@@ -370,7 +449,7 @@
         }
     }
 
-    // 活躍度計算邏輯 (共用)
+    // [動態] 活躍度計算邏輯 (套用自訂的 actConfig)
     function getActivityStatus(dateVal) {
         if (!dateVal) return "⚪無日期資料 (或新案開發)";
         const lowerStr = dateVal.toString().toLowerCase().trim();
@@ -383,13 +462,12 @@
         const diffTime = today - orderDate;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays < 10) return "㊗️固定下單";
-        if (diffDays < 30) return "🟢正常下單";
-        if (diffDays >= 60) return "🔴久未下單";
+        if (diffDays < actConfig.fixed) return "㊗️固定下單";
+        if (diffDays < actConfig.normal) return "🟢正常下單";
+        if (diffDays >= actConfig.inactive) return "🔴久未下單";
         return "🟠待觀察";
     }
 
-    // 表單輸入時：自動計算 (prefix 用來區分是 fd- 或 mod-)
     function autoCalcActivity(prefix) {
         const dateVal = document.getElementById(`${prefix}-lastOrder`).value;
         const actInput = document.getElementById(`${prefix}-activity`);
@@ -412,7 +490,7 @@
             activity: document.getElementById('fd-activity').value || "⚪無日期資料 (或新案開發)", 
             visit: document.getElementById('fd-visit').value || null,
             note: document.getElementById('fd-note').value.trim() || null,
-            products: [] // 預設空產品陣列
+            products: []
         };
 
         if (!payload.name || !payload.company) {
@@ -425,17 +503,14 @@
             alert("✅ 單筆資料已成功新增！");
             window.location.reload();
         } catch (err) {
-            console.error(err);
             alert("❌ 新增失敗：" + err.message);
         }
     }
 
     // ==================== [右側] 修改功能 ====================
-    // 當選單改變時，將資料載入對應欄位
     function loadModData() {
         const selectedId = document.getElementById('mod-select').value;
         
-        // 若選擇預設空白選項，清空輸入框，解開/鎖定部分元素
         if (!selectedId) {
             document.querySelectorAll('.mod-card input').forEach(input => {
                 input.value = '';
@@ -451,14 +526,12 @@
         const cust = allCustomers.find(c => c.id === selectedId);
         if (!cust) return;
 
-        // 載入資料 (客戶代號鎖定不給改，避免關聯錯誤)
         document.getElementById('mod-code').value = cust.code || '';
         document.getElementById('mod-name').value = cust.name || '';
         document.getElementById('mod-company').value = cust.company || '';
         document.getElementById('mod-contact').value = cust.contact || '';
         document.getElementById('mod-phone').value = cust.phone || '';
         
-        // 地區下拉選單防呆
         const regionSelect = document.getElementById('mod-region');
         if (cust.region && Array.from(regionSelect.options).some(o => o.value === cust.region)) {
             regionSelect.value = cust.region;
@@ -473,14 +546,11 @@
         document.getElementById('mod-visit').value = cust.visit || '';
         document.getElementById('mod-note').value = cust.note || '';
 
-        // 更新活躍度顯示
         autoCalcActivity('mod');
     }
 
-    // 提交修改至 Firebase
     async function updateData() {
         const selectedId = document.getElementById('mod-select').value;
-        
         if (!selectedId) {
             alert("請先從上方下拉選單選擇要修改的客戶！");
             return;
@@ -511,12 +581,11 @@
             alert("✅ 客戶資料更新成功！");
             window.location.reload();
         } catch (err) {
-            console.error(err);
             alert("❌ 更新失敗：" + err.message);
         }
     }
 
-    // ==================== CSV 匯入功能 (左側底端) ====================
+    // ==================== CSV 匯入功能 ====================
     function importCSV() {
         const fileInput = document.getElementById('csv-file');
         const file = fileInput.files[0];
@@ -534,7 +603,6 @@
                 
                 const payloadArray = data.map(row => {
                     const val = (key) => (row[key] && row[key].trim() !== '') ? row[key].trim() : null;
-                    
                     const numVal = (key) => {
                         const raw = val(key);
                         if (!raw) return 0;
@@ -573,27 +641,26 @@
                     for (let i = 0; i < payloadArray.length; i += chunkSize) {
                         const chunk = payloadArray.slice(i, i + chunkSize);
                         const batch = db.batch();
-                        
                         chunk.forEach(item => {
                             const docRef = db.collection('customers').doc(); 
                             batch.set(docRef, item);
                         });
-                        
                         await batch.commit(); 
                     }
-                    
                     alert(`✅ 成功批次匯入 ${payloadArray.length} 筆資料！`);
                     window.location.reload();
                 } catch (err) {
-                    console.error(err);
                     alert("❌ 批次匯入失敗：" + err.message);
                 }
             }
         });
     }
 
-    // 網頁載入完成後自動抓取客戶列表
-    window.onload = loadCustomers;
+    // 網頁載入時：先載入邏輯設定，再載入客戶資料
+    window.onload = async () => {
+        await loadActivityConfig();
+        loadCustomers();
+    };
 
 </script>
 
