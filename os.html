@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客戶資料管理系統 (新增 / 修改)</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e2e8f0;
+            --accent: #60a5fa;
+            --mod-accent: #f59e0b; /* 修改區塊的主色調(橘黃色) */
+            --bg-color: #0f172a;
+            --success: #10b981;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 左右雙欄位排版容器 */
+        .main-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            width: 100%;
+            max-width: 1300px;
+            justify-content: center;
+        }
+
+        .form-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            padding: 40px;
+            border-radius: 20px;
+            flex: 1;
+            min-width: 400px;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            text-align: center;
+            color: white;
+            padding-bottom: 15px;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+
+        .add-title { border-bottom: 2px solid var(--accent); }
+        .mod-title { border-bottom: 2px solid var(--mod-accent); }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .add-card label { color: var(--accent); }
+        .mod-card label { color: var(--mod-accent); }
+
+        input[type="text"], input[type="date"], input[type="number"], select, input[type="file"] {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            outline: none;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .add-card input:focus, .add-card select:focus {
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .mod-card input:focus, .mod-card select:focus {
+            border-color: var(--mod-accent);
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* 特別強調修改區的客戶選單 */
+        #mod-select {
+            border: 1px solid var(--mod-accent);
+            background: rgba(245, 158, 11, 0.1);
+            font-weight: bold;
+        }
+
+        ::-webkit-calendar-picker-indicator { filter: invert(1); }
+        select option { background: var(--bg-color); color: white; }
+
+        .btn {
+            width: 100%;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add { background: var(--accent); }
+        .btn-add:hover { background: #3b82f6; box-shadow: 0 0 15px rgba(96, 165, 250, 0.5); }
+
+        .btn-mod { background: var(--mod-accent); }
+        .btn-mod:hover { background: #d97706; box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+
+        .btn-csv { background: var(--success); margin-top: 10px; }
+        .btn-csv:hover { background: #059669; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
+
+        .readonly-field {
+            background: rgba(0,0,0,0.2) !important;
+            cursor: not-allowed;
+            color: #94a3b8 !important;
+            border: 1px dashed rgba(255,255,255,0.2) !important;
+        }
+
+        .divider {
+            border-top: 1px dashed var(--glass-border);
+            margin: 30px 0 20px 0;
+            padding-top: 20px;
+        }
+
+        @media (max-width: 850px) {
+            .form-card { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <div class="form-card add-card">
+        <h2 class="add-title">➕ 新增客戶資料</h2>
+        
+        <div class="form-group">
+            <label>客戶代號</label>
+            <input type="text" id="fd-code" placeholder="手動輸入">
+        </div>
+        <div class="form-group">
+            <label>客戶簡稱 (必填)</label>
+            <input type="text" id="fd-name" placeholder="手動輸入">
+        </div>
+        <div class="form-group">
+            <label>公司名稱 (必填)</label>
+            <input type="text" id="fd-company" placeholder="手動輸入">
+        </div>
+        <div class="form-group">
+            <label>聯絡人</label>
+            <input type="text" id="fd-contact" placeholder="手動輸入">
+        </div>
+        <div class="form-group">
+            <label>電話 (含區碼)</label>
+            <input type="text" id="fd-phone" placeholder="例如: 07-1234567">
+        </div>
+        <div class="form-group">
+            <label>地區</label>
+            <select id="fd-region">
+                <option value="基隆">基隆</option>
+                <option value="台北">台北</option>
+                <option value="新北">新北</option>
+                <option value="桃園">桃園</option>
+                <option value="新竹">新竹</option>
+                <option value="苗栗">苗栗</option>
+                <option value="台中">台中</option>
+                <option value="彰化">彰化</option>
+                <option value="南投">南投</option>
+                <option value="雲林">雲林</option>
+                <option value="嘉義">嘉義</option>
+                <option value="台南">台南</option>
+                <option value="高雄" selected>高雄</option>
+                <option value="屏東">屏東</option>
+                <option value="宜蘭">宜蘭</option>
+                <option value="花蓮">花蓮</option>
+                <option value="台東">台東</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>付款條件</label>
+            <input type="text" id="fd-terms" placeholder="手動輸入">
+        </div>
+        <div class="form-group">
+            <label>最後下單日</label>
+            <input type="date" id="fd-lastOrder" onchange="autoCalcActivity('fd')">
+        </div>
+        <div class="form-group">
+            <label>本年業績</label>
+            <input type="number" id="fd-perf" placeholder="手動輸入">
+        </div>
+        <div class="form-group">
+            <label>目前案件數</label>
+            <input type="number" id="fd-cases" placeholder="手動輸入">
+        </div>
+        <div class="form-group">
+            <label>訂單活躍度</label>
+            <input type="text" id="fd-activity" class="readonly-field" readonly placeholder="系統依據日期自動判斷">
+        </div>
+        <div class="form-group">
+            <label>下次拜訪日</label>
+            <input type="date" id="fd-visit">
+        </div>
+        <div class="form-group">
+            <label>備註</label>
+            <input type="text" id="fd-note" placeholder="手動輸入">
+        </div>
+
+        <button class="btn btn-add" onclick="submitData()">儲存並新增至資料庫</button>
+
+        <div class="divider">
+            <h2 class="add-title" style="border:none;">📁 批次匯入 CSV</h2>
+            <div class="form-group">
+                <label>選擇 CSV 檔案 (首列需為欄位名稱)</label>
+                <input type="file" id="csv-file" accept=".csv">
+            </div>
+            <button class="btn btn-csv" onclick="importCSV()">解析並批次匯入至資料庫</button>
+        </div>
+    </div>
+
+
+    <div class="form-card mod-card">
+        <h2 class="mod-title">✏️ 修改客戶資料</h2>
+        
+        <div class="form-group">
+            <label>選擇要修改的客戶</label>
+            <select id="mod-select" onchange="loadModData()">
+                <option value="">載入資料中，請稍候...</option>
+            </select>
+        </div>
+
+        <div class="divider" style="margin: 15px 0;"></div>
+
+        <div class="form-group">
+            <label>客戶代號</label>
+            <input type="text" id="mod-code" placeholder="尚未選擇客戶" class="readonly-field" readonly>
+        </div>
+        <div class="form-group">
+            <label>客戶簡稱 (必填)</label>
+            <input type="text" id="mod-name" placeholder="尚未選擇客戶">
+        </div>
+        <div class="form-group">
+            <label>公司名稱 (必填)</label>
+            <input type="text" id="mod-company" placeholder="尚未選擇客戶">
+        </div>
+        <div class="form-group">
+            <label>聯絡人</label>
+            <input type="text" id="mod-contact" placeholder="尚未選擇客戶">
+        </div>
+        <div class="form-group">
+            <label>電話 (含區碼)</label>
+            <input type="text" id="mod-phone" placeholder="尚未選擇客戶">
+        </div>
+        <div class="form-group">
+            <label>地區</label>
+            <select id="mod-region">
+                <option value="基隆">基隆</option>
+                <option value="台北">台北</option>
+                <option value="新北">新北</option>
+                <option value="桃園">桃園</option>
+                <option value="新竹">新竹</option>
+                <option value="苗栗">苗栗</option>
+                <option value="台中">台中</option>
+                <option value="彰化">彰化</option>
+                <option value="南投">南投</option>
+                <option value="雲林">雲林</option>
+                <option value="嘉義">嘉義</option>
+                <option value="台南">台南</option>
+                <option value="高雄">高雄</option>
+                <option value="屏東">屏東</option>
+                <option value="宜蘭">宜蘭</option>
+                <option value="花蓮">花蓮</option>
+                <option value="台東">台東</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>付款條件</label>
+            <input type="text" id="mod-terms" placeholder="尚未選擇客戶">
+        </div>
+        <div class="form-group">
+            <label>最後下單日</label>
+            <input type="date" id="mod-lastOrder" onchange="autoCalcActivity('mod')">
+        </div>
+        <div class="form-group">
+            <label>本年業績</label>
+            <input type="number" id="mod-perf" placeholder="尚未選擇客戶">
+        </div>
+        <div class="form-group">
+            <label>目前案件數</label>
+            <input type="number" id="mod-cases" placeholder="尚未選擇客戶">
+        </div>
+        <div class="form-group">
+            <label>訂單活躍度</label>
+            <input type="text" id="mod-activity" class="readonly-field" readonly placeholder="系統依據日期自動判斷">
+        </div>
+        <div class="form-group">
+            <label>下次拜訪日</label>
+            <input type="date" id="mod-visit">
+        </div>
+        <div class="form-group">
+            <label>備註</label>
+            <input type="text" id="mod-note" placeholder="尚未選擇客戶">
+        </div>
+
+        <button class="btn btn-mod" onclick="updateData()">儲存更新</button>
+    </div>
+</div>
+
+<script>
+    // ======= Firebase 配置 (請替換為您的參數) =======
+    const firebaseConfig = {
+        apiKey: "AIzaSyAvLmHzZK6HwMLJFo3JyzY_T_azpElk1Lc",
+        authDomain: "beautiful-68dbc.firebaseapp.com",
+        databaseURL: "https://beautiful-68dbc-default-rtdb.firebaseio.com",
+        projectId: "beautiful-68dbc",
+        storageBucket: "beautiful-68dbc.firebasestorage.app",
+        messagingSenderId: "348466975949",
+        appId: "1:348466975949:web:1f6f5483ce3c0f91a34584"
+    };
+
+    // 初始化 Firebase 與 Firestore
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    // ===============================================
+
+    // 全域變數存放抓取的客戶資料
+    let allCustomers = [];
+
+    // 載入所有客戶名單 (建立下拉選單)
+    async function loadCustomers() {
+        const select = document.getElementById('mod-select');
+        try {
+            const snapshot = await db.collection('customers').get();
+            allCustomers = [];
+            select.innerHTML = '<option value="">請選擇要修改的客戶...</option>';
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                allCustomers.push({ id: doc.id, ...data });
+                
+                const opt = document.createElement('option');
+                opt.value = doc.id;
+                // 下拉選單顯示：客戶簡稱 (公司名稱)
+                opt.textContent = `${data.name || '無簡稱'} (${data.company || '無公司名'})`;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error("載入客戶列表失敗: ", err);
+            select.innerHTML = '<option value="">❌ 載入失敗，請重整頁面</option>';
+        }
+    }
+
+    // 活躍度計算邏輯 (共用)
+    function getActivityStatus(dateVal) {
+        if (!dateVal) return "⚪無日期資料 (或新案開發)";
+        const lowerStr = dateVal.toString().toLowerCase().trim();
+        if (lowerStr === "new" || lowerStr === "nwe") return "🆕️新案開發";
+        
+        const orderDate = new Date(dateVal);
+        if (isNaN(orderDate.getTime())) return "⚪無效日期";
+
+        const today = new Date();
+        const diffTime = today - orderDate;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 10) return "㊗️固定下單";
+        if (diffDays < 30) return "🟢正常下單";
+        if (diffDays >= 60) return "🔴久未下單";
+        return "🟠待觀察";
+    }
+
+    // 表單輸入時：自動計算 (prefix 用來區分是 fd- 或 mod-)
+    function autoCalcActivity(prefix) {
+        const dateVal = document.getElementById(`${prefix}-lastOrder`).value;
+        const actInput = document.getElementById(`${prefix}-activity`);
+        actInput.value = getActivityStatus(dateVal);
+    }
+
+    // ==================== [左側] 新增功能 ====================
+    async function submitData() {
+        const payload = {
+            code: document.getElementById('fd-code').value.trim() || null,
+            name: document.getElementById('fd-name').value.trim(),
+            company: document.getElementById('fd-company').value.trim(),
+            contact: document.getElementById('fd-contact').value.trim() || null,
+            phone: document.getElementById('fd-phone').value.trim() || null,
+            region: document.getElementById('fd-region').value,
+            terms: document.getElementById('fd-terms').value.trim() || null,
+            lastOrder: document.getElementById('fd-lastOrder').value || null,
+            perf: parseFloat(document.getElementById('fd-perf').value) || 0,
+            cases: parseInt(document.getElementById('fd-cases').value) || 0,
+            activity: document.getElementById('fd-activity').value || "⚪無日期資料 (或新案開發)", 
+            visit: document.getElementById('fd-visit').value || null,
+            note: document.getElementById('fd-note').value.trim() || null,
+            products: [] // 預設空產品陣列
+        };
+
+        if (!payload.name || !payload.company) {
+            alert("請至少填寫『客戶簡稱』與『公司名稱』！");
+            return;
+        }
+
+        try {
+            await db.collection('customers').add(payload);
+            alert("✅ 單筆資料已成功新增！");
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("❌ 新增失敗：" + err.message);
+        }
+    }
+
+    // ==================== [右側] 修改功能 ====================
+    // 當選單改變時，將資料載入對應欄位
+    function loadModData() {
+        const selectedId = document.getElementById('mod-select').value;
+        
+        // 若選擇預設空白選項，清空輸入框，解開/鎖定部分元素
+        if (!selectedId) {
+            document.querySelectorAll('.mod-card input').forEach(input => {
+                input.value = '';
+                if(input.id !== 'mod-code' && input.id !== 'mod-activity') {
+                    input.classList.remove('readonly-field');
+                    input.readOnly = false;
+                }
+            });
+            document.getElementById('mod-code').classList.add('readonly-field');
+            return;
+        }
+
+        const cust = allCustomers.find(c => c.id === selectedId);
+        if (!cust) return;
+
+        // 載入資料 (客戶代號鎖定不給改，避免關聯錯誤)
+        document.getElementById('mod-code').value = cust.code || '';
+        document.getElementById('mod-name').value = cust.name || '';
+        document.getElementById('mod-company').value = cust.company || '';
+        document.getElementById('mod-contact').value = cust.contact || '';
+        document.getElementById('mod-phone').value = cust.phone || '';
+        
+        // 地區下拉選單防呆
+        const regionSelect = document.getElementById('mod-region');
+        if (cust.region && Array.from(regionSelect.options).some(o => o.value === cust.region)) {
+            regionSelect.value = cust.region;
+        } else {
+            regionSelect.value = '高雄';
+        }
+
+        document.getElementById('mod-terms').value = cust.terms || '';
+        document.getElementById('mod-lastOrder').value = cust.lastOrder || '';
+        document.getElementById('mod-perf').value = cust.perf || '';
+        document.getElementById('mod-cases').value = cust.cases || '';
+        document.getElementById('mod-visit').value = cust.visit || '';
+        document.getElementById('mod-note').value = cust.note || '';
+
+        // 更新活躍度顯示
+        autoCalcActivity('mod');
+    }
+
+    // 提交修改至 Firebase
+    async function updateData() {
+        const selectedId = document.getElementById('mod-select').value;
+        
+        if (!selectedId) {
+            alert("請先從上方下拉選單選擇要修改的客戶！");
+            return;
+        }
+
+        const payload = {
+            name: document.getElementById('mod-name').value.trim(),
+            company: document.getElementById('mod-company').value.trim(),
+            contact: document.getElementById('mod-contact').value.trim() || null,
+            phone: document.getElementById('mod-phone').value.trim() || null,
+            region: document.getElementById('mod-region').value,
+            terms: document.getElementById('mod-terms').value.trim() || null,
+            lastOrder: document.getElementById('mod-lastOrder').value || null,
+            perf: parseFloat(document.getElementById('mod-perf').value) || 0,
+            cases: parseInt(document.getElementById('mod-cases').value) || 0,
+            activity: document.getElementById('mod-activity').value || "⚪無日期資料 (或新案開發)", 
+            visit: document.getElementById('mod-visit').value || null,
+            note: document.getElementById('mod-note').value.trim() || null
+        };
+
+        if (!payload.name || !payload.company) {
+            alert("『客戶簡稱』與『公司名稱』不可為空！");
+            return;
+        }
+
+        try {
+            await db.collection('customers').doc(selectedId).update(payload);
+            alert("✅ 客戶資料更新成功！");
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("❌ 更新失敗：" + err.message);
+        }
+    }
+
+    // ==================== CSV 匯入功能 (左側底端) ====================
+    function importCSV() {
+        const fileInput = document.getElementById('csv-file');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert("請先選擇 CSV 檔案！");
+            return;
+        }
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async function(results) {
+                const data = results.data;
+                
+                const payloadArray = data.map(row => {
+                    const val = (key) => (row[key] && row[key].trim() !== '') ? row[key].trim() : null;
+                    
+                    const numVal = (key) => {
+                        const raw = val(key);
+                        if (!raw) return 0;
+                        const parsed = parseFloat(raw.replace(/,/g, ''));
+                        return isNaN(parsed) ? 0 : parsed;
+                    };
+
+                    const lastOrderDate = val('最後下單日');
+                    const finalActivity = val('訂單活躍度') || getActivityStatus(lastOrderDate);
+
+                    return {
+                        code: val('客戶代號'),
+                        name: val('客戶簡稱'),
+                        company: val('公司名稱'),
+                        contact: val('聯絡人'),
+                        phone: val('電話'),
+                        region: val('地區') || '高雄',
+                        terms: val('付款條件'),
+                        lastOrder: lastOrderDate, 
+                        perf: numVal('本年業績'), 
+                        cases: numVal('目前案件數'),
+                        activity: finalActivity, 
+                        visit: val('下次拜訪日'), 
+                        note: val('備註'),
+                        products: []
+                    };
+                }).filter(item => item.name && item.company);
+
+                if (payloadArray.length === 0) {
+                    alert("⚠️ 檔案中沒有找到有效的資料，請確認 CSV 標題是否正確。");
+                    return;
+                }
+
+                try {
+                    const chunkSize = 500;
+                    for (let i = 0; i < payloadArray.length; i += chunkSize) {
+                        const chunk = payloadArray.slice(i, i + chunkSize);
+                        const batch = db.batch();
+                        
+                        chunk.forEach(item => {
+                            const docRef = db.collection('customers').doc(); 
+                            batch.set(docRef, item);
+                        });
+                        
+                        await batch.commit(); 
+                    }
+                    
+                    alert(`✅ 成功批次匯入 ${payloadArray.length} 筆資料！`);
+                    window.location.reload();
+                } catch (err) {
+                    console.error(err);
+                    alert("❌ 批次匯入失敗：" + err.message);
+                }
+            }
+        });
+    }
+
+    // 網頁載入完成後自動抓取客戶列表
+    window.onload = loadCustomers;
+
+</script>
+
+</body>
+</html>
