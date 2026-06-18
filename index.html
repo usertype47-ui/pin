@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客戶維繫管理系統 - 導覽</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e2e8f0;
+            --accent: #60a5fa;
+            --bg-color: #0f172a;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 跑馬燈：自動偵測久未下單 */
+        #marquee-container {
+            background-color: yellow;
+            color: red;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 8px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            display: none; /* 預設隱藏，觸發時顯示 */
+            z-index: 2000;
+        }
+        
+        #marquee-content {
+            display: inline-block;
+            animation: marquee 10s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* 浮動導覽列框架 */
+        nav {
+            position: sticky;
+            top: 20px;
+            margin: 20px auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        nav::-webkit-scrollbar { display: none; }
+
+        .nav-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.5);
+        }
+
+        /* 內容顯示區 */
+        #content-container {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* 懸浮維繫產品框 (黃色閃爍) */
+        #product-floating-box {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid yellow;
+            padding: 10px 15px;
+            border-radius: 12px;
+            width: max-content;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
+            color: yellow;
+            font-weight: bold;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; text-shadow: 0 0 10px yellow; }
+            50% { opacity: 0.6; text-shadow: none; }
+        }
+
+        .data-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .label { color: var(--accent); font-weight: bold; }
+        h2 { margin-top: 0; color: #fff; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+
+        /* 獨立維繫產品管理框架 */
+        #product-manager {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--accent);
+            padding: 20px;
+            border-radius: 15px;
+            width: 300px;
+            z-index: 9999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: none;
+        }
+
+        #product-manager h3 { margin-top: 0; color: var(--accent); font-size: 1.2rem; }
+        .product-list { margin-bottom: 15px; max-height: 100px; overflow-y: auto; }
+        .product-item { display: flex; justify-content: space-between; margin-bottom: 5px; background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 5px;}
+        .delete-btn { background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .input-group { display: flex; gap: 10px; }
+        .input-group input { flex: 1; padding: 8px; border-radius: 5px; border: none; background: rgba(255,255,255,0.1); color: white;}
+        .input-group button { background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+<div id="marquee-container">
+    <div id="marquee-content"></div>
+</div>
+
+<nav id="navbar"></nav>
+
+<div id="content-container">
+    <div class="card" id="display-card">
+        <h2>系統載入中...</h2>
+    </div>
+    <div id="product-floating-box"></div>
+</div>
+
+<div id="product-manager">
+    <h3>維繫產品管理</h3>
+    <div class="product-list" id="product-list"></div>
+    <div class="input-group">
+        <input type="text" id="new-product-name" placeholder="輸入產品名稱">
+        <button onclick="addProduct()">新增</button>
+    </div>
+</div>
+
+<script>
+    // ======= Firebase 配置 (請替換為您的參數) =======
+    const firebaseConfig = {
+        apiKey: "AIzaSyAvLmHzZK6HwMLJFo3JyzY_T_azpElk1Lc",
+  authDomain: "beautiful-68dbc.firebaseapp.com",
+  databaseURL: "https://beautiful-68dbc-default-rtdb.firebaseio.com",
+  projectId: "beautiful-68dbc",
+  storageBucket: "beautiful-68dbc.firebasestorage.app",
+  messagingSenderId: "348466975949",
+  appId: "1:348466975949:web:1f6f5483ce3c0f91a34584"
+};
+    
+    // 初始化 Firebase 與 Firestore
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    // ===============================================
+
+    // 原始備用資料 (若 DB 為空時初始化用)
+    const originalCSVData = [
+        {code: "06005", name: "勝銓", company: "勝銓實業有限公司", contact: "楊勝銓", phone: "06-2011391", region: "台南", terms: "100天", lastOrder: "", daysAgo: "", perf: "", cases: "", visit: "", note: ""},
+        {code: "06011", name: "惟鴻", company: "惟鴻工業有限公司", contact: "蕭惟鴻", phone: "0988-078065", region: "台南", terms: "85天T/T", lastOrder: "", daysAgo: "", perf: "", cases: "", visit: "", note: ""},
+        {code: "06012", name: "寶源", company: "寶源事業有限公司", contact: "蔡振源", phone: "06-2710853", region: "台南", terms: "35天扣5%", lastOrder: "new", daysAgo: "", perf: "", cases: "", visit: "", note: ""},
+        {code: "07153", name: "寶凱", company: "寶凱電子企業股份有限公司", contact: "王曉齡", phone: "07-7872900", region: "高雄", terms: "60天T/T", lastOrder: "2026-06-12", daysAgo: "6", perf: "", cases: "", visit: "", note: ""}
+    ];
+
+    let customers = [];
+    let currentCustomer = null;
+
+    // 計算活躍度邏輯
+    function calculateActivity(lastOrderStr) {
+        if (!lastOrderStr) return "🔴久未下單"; 
+        const lowerStr = lastOrderStr.toString().toLowerCase();
+        if (lowerStr === "new" || lowerStr === "nwe") return "🆕️新案開發";
+
+        const lastDate = new Date(lastOrderStr);
+        if (isNaN(lastDate)) return "🔴久未下單";
+
+        const today = new Date();
+        const diffTime = Math.abs(today - lastDate);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays >= 60) return "🔴久未下單";
+        if (diffDays < 10) return "㊗️固定下單";
+        return "🟢正常下單";
+    }
+
+    async function initSystem() {
+        try {
+            // 從 Firebase Firestore 讀取資料
+            const querySnapshot = await db.collection('customers').get();
+            
+            if (querySnapshot.empty) {
+                console.log("資料庫為空，使用預設資料。");
+                customers = originalCSVData.map(c => ({...c, products: []}));
+            } else {
+                customers = [];
+                querySnapshot.forEach((doc) => {
+                    // 將 document ID 儲存在物件內，以便後續更新產品陣列
+                    customers.push({ id: doc.id, ...doc.data() });
+                });
+            }
+        } catch (error) {
+            console.error("資料庫讀取失敗：", error);
+            customers = originalCSVData.map(c => ({...c, products: []}));
+        }
+
+        renderMarquee();
+        renderNav();
+        document.getElementById('display-card').innerHTML = "<h2>請選擇上方客戶查看資料</h2>";
+    }
+
+    // 渲染紅色警戒跑馬燈
+    function renderMarquee() {
+        const warningList = customers
+            .filter(c => calculateActivity(c.lastOrder) === "🔴久未下單")
+            .map(c => c.name);
+
+        const marqueeContainer = document.getElementById('marquee-container');
+        const marqueeContent = document.getElementById('marquee-content');
+
+        if (warningList.length > 0) {
+            marqueeContainer.style.display = "block";
+            marqueeContent.textContent = `⚠️ 警告！以下客戶已久未下單：${warningList.join(' 、 ')} ⚠️`;
+        } else {
+            marqueeContainer.style.display = "none";
+        }
+    }
+
+    function renderNav() {
+        const nav = document.getElementById('navbar');
+        nav.innerHTML = '';
+        
+        customers.forEach((c, index) => {
+            const item = document.createElement('div');
+            item.className = 'nav-item';
+            item.textContent = c.name;
+            
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+                showCustomerData(index);
+            });
+            nav.appendChild(item);
+        });
+    }
+
+    function showCustomerData(index) {
+        currentCustomer = customers[index];
+        const activity = calculateActivity(currentCustomer.lastOrder);
+        
+        const displayCard = document.getElementById('display-card');
+        displayCard.innerHTML = `
+            <h2>${currentCustomer.company || '無公司名稱'}</h2>
+            <div class="data-row"><div class="label">客戶代號:</div><div>${currentCustomer.code || ''}</div></div>
+            <div class="data-row"><div class="label">聯絡人:</div><div>${currentCustomer.contact || ''}</div></div>
+            <div class="data-row"><div class="label">電話:</div><div>${currentCustomer.phone || ''}</div></div>
+            <div class="data-row"><div class="label">地區:</div><div>${currentCustomer.region || ''}</div></div>
+            <div class="data-row"><div class="label">付款條件:</div><div>${currentCustomer.terms || ''}</div></div>
+            <div class="data-row"><div class="label">最後下單日:</div><div>${currentCustomer.lastOrder || '無'}</div></div>
+            <div class="data-row"><div class="label">訂單活躍度:</div><div style="font-weight:bold; font-size:1.2rem;">${activity}</div></div>
+            <div class="data-row"><div class="label">本年業績:</div><div>${currentCustomer.perf || ''}</div></div>
+            <div class="data-row"><div class="label">目前案件數:</div><div>${currentCustomer.cases || ''}</div></div>
+            <div class="data-row"><div class="label">下次拜訪日:</div><div>${currentCustomer.visit || ''}</div></div>
+            <div class="data-row"><div class="label">備註:</div><div>${currentCustomer.note || ''}</div></div>
+        `;
+
+        renderProducts();
+    }
+
+    // 渲染維繫產品 (右上角懸浮與右下角管理)
+    function renderProducts() {
+        const floatingBox = document.getElementById('product-floating-box');
+        const manager = document.getElementById('product-manager');
+        const list = document.getElementById('product-list');
+        
+        const products = currentCustomer.products || [];
+
+        // 懸浮框
+        if (products.length > 0) {
+            floatingBox.style.display = "block";
+            floatingBox.innerHTML = `維繫產品：${products.join(' , ')}`;
+        } else {
+            floatingBox.style.display = "none";
+        }
+
+        // 管理面板
+        manager.style.display = "block";
+        list.innerHTML = '';
+        products.forEach((p, pIndex) => {
+            const div = document.createElement('div');
+            div.className = 'product-item';
+            div.innerHTML = `
+                <span>${p}</span>
+                <button class="delete-btn" onclick="deleteProduct(${pIndex})">刪除</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    // 新增維繫產品並同步至 Firebase
+    async function addProduct() {
+        if(!currentCustomer) return;
+        const input = document.getElementById('new-product-name');
+        const val = input.value.trim();
+        if(!val) return;
+
+        if(!currentCustomer.products) currentCustomer.products = [];
+        currentCustomer.products.push(val);
+        input.value = '';
+        
+        await updateFirebaseProducts();
+        renderProducts();
+    }
+
+    // 刪除維繫產品
+    async function deleteProduct(index) {
+        if(!currentCustomer) return;
+        currentCustomer.products.splice(index, 1);
+        await updateFirebaseProducts();
+        renderProducts();
+    }
+
+    // 更新 Firebase 中的維繫產品
+    async function updateFirebaseProducts() {
+        if(!currentCustomer || !currentCustomer.id) {
+            console.error("無有效的 Document ID，無法更新資料庫。");
+            return;
+        }
+        try {
+            await db.collection('customers').doc(currentCustomer.id).update({
+                products: currentCustomer.products
+            });
+            console.log("產品更新成功");
+        } catch (error) {
+            console.error("Firebase 產品更新失敗", error);
+        }
+    }
+
+    // 初始化執行
+    initSystem();
+</script>
+
+</body>
+</html>
