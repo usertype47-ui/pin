@@ -172,7 +172,16 @@
     margin-right: auto;    /* 確保右邊推開 */
     box-sizing: border-box;
 }
+        #company-title {
+    display: none; /* 直接隱藏該元素 */
+}
+         /* 若移除 h2，建議增加 .card 內部的頂部填充 (padding-top) */
+.card {
+    /* ...原有設定... */
+    padding-top: 50px; /* 根據需求調整，留出空間 */
+}
 
+        
         /* 輸入框與按鈕樣式 */
         .input-group { display: flex; gap: 8px; width: 100%; }
         .input-group input { width: 150px; padding: 8px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-size: 1rem;}
@@ -331,6 +340,7 @@
         const displayCard = document.getElementById('display-card');
         displayCard.innerHTML = `
             <div id="product-floating-box"></div>
+            <h2 id="company-title">${currentCustomer.company || '無公司名稱'}</h2>
             <div class="data-row"><div class="label">客戶代號:</div><div>${currentCustomer.code || ''}</div></div>
             <div class="data-row"><div class="label">聯絡人:</div><div>${currentCustomer.contact || ''}</div></div>
             <div class="data-row"><div class="label">電話:</div><div>${currentCustomer.phone || ''}</div></div>
