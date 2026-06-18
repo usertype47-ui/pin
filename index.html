@@ -155,12 +155,23 @@
         .label { color: var(--accent); font-weight: bold; }
         
         h2 { 
-            margin-top: 0; 
-            color: #fff; 
-            border-bottom: 2px solid var(--accent); 
-            padding-bottom: 10px; 
-            padding-right: 200px; 
-        }
+    margin-top: 0; 
+    color: #fff; 
+    background: rgba(96, 165, 250, 0.2); 
+    padding: 10px 20px;
+    border-radius: 8px;
+    border-bottom: none; 
+    font-size: 1.4rem; /* 微調字體大小，配合縮短寬度 */
+    margin-bottom: 20px;
+    
+    /* === 關鍵編譯設定 === */
+    width: fit-content;    /* 寬度隨文字內容自動收縮 */
+    min-width: 120px;      /* 設定最小寬度，避免太窄 */
+    max-width: 55%;        /* 設定最大寬度，避免爆版 */
+    margin-left: 0;        /* 強制向左靠齊 */
+    margin-right: auto;    /* 確保右邊推開 */
+    box-sizing: border-box;
+}
 
         /* 輸入框與按鈕樣式 */
         .input-group { display: flex; gap: 8px; width: 100%; }
