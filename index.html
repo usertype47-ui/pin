@@ -3,16 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>客戶維繫管理系統 - 導覽</title>
+    <title>客戶維繫管理系統 - 導覽與排版設定</title>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <style>
+        /* === 動態標題排版專用 CSS 變數 (預設值) === */
         :root {
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-main: #e2e8f0;
             --accent: #60a5fa;
             --bg-color: #0f172a;
+
+            /* 標題 (公司名稱) 控制變數 */
+            --h2-display: block;
+            --h2-font-size: 1.8rem;
+            --h2-width: 100%;
+            --h2-writing-mode: horizontal-tb;
+            --h2-text-align: left;
+            --h2-color: #ffffff;
+            --h2-font-weight: bold;
+            --h2-text-decoration: none;
+            --h2-font-style: normal;
+            --h2-border-width: 0px;
+            --h2-border-style: solid;
+            --h2-border-color: #ffffff;
+            --h2-opacity: 1;
+            --h2-symbol: '';
+            
+            /* 漸層控制 */
+            --h2-bg: transparent;
+            --h2-bg-clip: border-box;
+            --h2-text-fill: var(--h2-color);
         }
 
         body {
@@ -27,7 +49,7 @@
             overflow: hidden;
         }
 
-        /* 跑馬燈：自動偵測久未下單 */
+        /* 跑馬燈 */
         #marquee-container {
             background-color: yellow;
             color: red;
@@ -39,18 +61,16 @@
             display: none; 
             z-index: 2000;
         }
-        
         #marquee-content {
             display: inline-block;
             animation: marquee 30s linear infinite;
         }
-
         @keyframes marquee {
             0% { transform: translateX(100vw); }
             100% { transform: translateX(-100%); }
         }
 
-        /* 浮動導覽列框架 */
+        /* 導覽列 */
         nav {
             position: sticky;
             top: 20px;
@@ -68,9 +88,7 @@
             overflow-x: auto;
             white-space: nowrap;
         }
-
         nav::-webkit-scrollbar { display: none; }
-
         .nav-item {
             padding: 8px 16px;
             cursor: pointer;
@@ -79,7 +97,6 @@
             color: #94a3b8;
             font-weight: 500;
         }
-
         .nav-item:hover, .nav-item.active {
             background: var(--accent);
             color: white;
@@ -111,34 +128,30 @@
             box-sizing: border-box;
         }
 
-        /* 🌟 重點修改：黃色產品框改為結構元素，移除 absolute，加入 100% 寬度與下邊距 */
+        /* 黃色產品框 */
         #product-floating-box {
             background: rgba(15, 23, 42, 0.95);
             border: 2px solid yellow;
             padding: 15px;
             border-radius: 10px;
-            width: 100%;               /* 讓它填滿卡片寬度 */
+            width: 100%;
             box-sizing: border-box;
-            display: none;             /* 預設隱藏，由 JS 決定顯示 */
+            display: none;
             box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
             color: yellow;
             font-weight: bold;
             font-size: 0.95rem;
-            animation: blink 1.5s infinite;
-            margin-bottom: 20px;       /* 往下推開後方的資料欄位 */
-            
-            /* 直式佈局 */
+            animation: blinkBox 1.5s infinite;
+            margin-bottom: 20px;
             flex-direction: column;
             gap: 4px;
             align-items: flex-start;
         }
-
-        @keyframes blink {
+        @keyframes blinkBox {
             0%, 100% { opacity: 1; text-shadow: 0 0 10px yellow; }
             50% { opacity: 0.6; text-shadow: none; }
         }
 
-        /* 標準雙欄網格 */
         .data-row {
             display: grid;
             grid-template-columns: 140px 1fr;
@@ -148,85 +161,270 @@
             font-size: 1.1rem;
             align-items: start;
         }
+        .label { color: var(--accent); font-weight: bold; }
 
-        .label { 
-        color: var(--accent); 
-        font-weight: bold; }
-        
-        /* 移除原本為了閃避懸浮框而設定的 padding-right: 200px */
-        h2 { 
-            margin-top: 0; 
-            color: #fff; 
-            border-bottom: 2px solid var(--accent); 
-            padding-bottom: 10px; 
+        /* === 🌟 動態編譯：全域標題 (公司名稱) 樣式套用 === */
+        h2 {
+            margin-top: 0;
             margin-bottom: 25px;
+            box-sizing: border-box;
+            padding-bottom: 10px;
+            transition: all 0.3s ease; 
+            
+            /* 綁定變數 */
+            display: var(--h2-display);
+            font-size: var(--h2-font-size);
+            width: var(--h2-width);
+            writing-mode: var(--h2-writing-mode);
+            text-align: var(--h2-text-align);
+            font-weight: var(--h2-font-weight);
+            text-decoration: var(--h2-text-decoration);
+            font-style: var(--h2-font-style);
+            border: var(--h2-border-style);
+            border-width: var(--h2-border-width);
+            border-color: var(--h2-border-color);
+            opacity: var(--h2-opacity);
+            
+            /* 漸層與顏色衝突處理 */
+            background: var(--h2-bg);
+            -webkit-background-clip: var(--h2-bg-clip);
+            -webkit-text-fill-color: var(--h2-text-fill);
+        }
+
+        h2::before {
+            content: var(--h2-symbol);
+            margin-right: 8px;
+            -webkit-text-fill-color: initial; 
+        }
+
+        .h2-blink-active { animation: h2BlinkAnim 1s infinite; }
+        @keyframes h2BlinkAnim {
+            0%, 100% { opacity: var(--h2-opacity); }
+            50% { opacity: 0; }
         }
 
         /* 輸入框與按鈕樣式 */
-        .input-group { 
-        display: flex; 
-        gap: 8px; 
-        width: 100%; }
-        .input-group input {
-         box-sizing: border-box; /* 這非常重要！ */
-         width: 60%;
-         padding: 8px 12px; 
-         border-radius: 6px;    
-         border: none; 
-         background: rgba(255,255,255,0.1); 
-         color: white; 
-         font-size: 1rem;}
-        .input-group input:focus { 
-        outline: 1px solid var(--accent); }
+        .vertical-row { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; border-bottom: none;}
+        .input-group { display: flex; gap: 8px; width: 100%; }
+        .input-group input { box-sizing: border-box; width: 60%; padding: 8px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-size: 1rem;}
+        .input-group input:focus { outline: 1px solid var(--accent); }
+        .btn-add { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s;}
+        .btn-add:hover { background: #059669; }
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s;}
+        .btn-delete:hover { background: #dc2626; }
+
+        /* ========================================================
+           🌟 懸浮設定按鈕與獨立設定面板樣式 (優化版)
+           ======================================================== */
+        #settings-fab {
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; color: white;
+            font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: grab;
+            z-index: 9998; user-select: none; touch-action: none; 
+        }
+        #settings-fab:active { cursor: grabbing; transform: scale(0.95); }
+
+        #settings-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px);
+            z-index: 9999; display: none; flex-direction: column; overflow-y: auto;
+        }
+
+        .settings-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 40px; background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--glass-border); position: sticky; top: 0; z-index: 10;
+        }
+        .settings-header h1 { margin: 0; font-size: 1.5rem; color: var(--accent); display: flex; align-items: center; gap: 10px;}
+        .close-btn {
+            background: #ef4444; border: none; color: white; padding: 8px 25px;
+            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.2s;
+        }
+        .close-btn:hover { background: #dc2626; transform: scale(1.05); }
+
+        .settings-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px; padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box;
+        }
+
+        /* 卡片設計與排版強化 */
+        .set-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            padding: 25px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .set-card-title {
+            font-size: 1.1rem; color: var(--accent); margin: 0 0 10px 0;
+            padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 8px; font-weight: bold;
+        }
+
+        /* 每一列的控制項目左右對齊 */
+        .set-item { display: flex; justify-content: space-between; align-items: center; gap: 10px;}
+        .set-item label { font-size: 0.95rem; color: #cbd5e1; font-weight: 500; margin: 0; flex-shrink: 0;}
+        .set-control { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end;}
+
+        /* 控制元件樣式優化 */
+        .set-input, .set-select {
+            width: 100%; max-width: 160px; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.4); color: white; font-family: inherit; font-size: 0.9rem;
+        }
+        .set-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);}
+        .set-color { width: 60px; height: 35px; border: none; cursor: pointer; background: none; border-radius: 6px; padding: 0;}
+        .set-range { width: 100%; max-width: 120px; cursor: pointer; accent-color: var(--accent);}
         
-        .btn-add { 
-        background: #10b981; 
-        color: white; 
-        border: none; 
-        padding: 8px 16px; 
-        border-radius: 6px; 
-        cursor: pointer; 
-        font-weight: bold; 
-        font-size: 1rem; 
-        transition: background 0.2s;}
-        .btn-add:hover { 
-        background: #059669; }
-        
-        .btn-delete { 
-        background: #ef4444; 
-        color: white; 
-        border: none; 
-        padding: 8px 16px; 
-        border-radius: 6px; 
-        cursor: pointer; 
-        font-weight: bold; 
-        font-size: 1rem; 
-        transition: background 0.2s;}
-        .btn-delete:hover { 
-        background: #dc2626; }
-        
-        /* 新增這個樣式來強制直向排列 */
-         .vertical-row {
-         display: flex;
-         flex-direction: column; /* 強制直向 */
-         gap: 15px;               /* 標籤與輸入框的間距 */
-         margin-bottom: 20px;
-         border-bottom: none;    /* 如果不需要底線 */
-}
-        
+        /* 數值顯示徽章 */
+        .val-badge {
+            background: rgba(96, 165, 250, 0.15); border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #93c5fd; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem;
+            min-width: 45px; text-align: center; font-weight: bold; font-family: monospace;
+        }
+
     </style>
 </head>
 <body>
 
-<div id="marquee-container">
-    <div id="marquee-content"></div>
-</div>
-
+<div id="marquee-container"><div id="marquee-content"></div></div>
 <nav id="navbar"></nav>
 
 <div id="content-container">
     <div class="card" id="display-card">
         <h2>系統載入中...</h2>
+    </div>
+</div>
+
+<div id="settings-fab" title="標題排版設定">⚙️</div>
+
+<div id="settings-modal">
+    <div class="settings-header">
+        <h1>🔧 全域標題 (公司名稱) 視覺控制台</h1>
+        <button class="close-btn" onclick="toggleSettings(false)">完成並關閉</button>
+    </div>
+    
+    <div class="settings-grid">
+        
+        <div class="set-card">
+            <h3 class="set-card-title">👁️ 顯示與特效</h3>
+            <div class="set-item">
+                <label>顯示標題</label>
+                <div class="set-control"><input type="checkbox" id="set-display" class="set-checkbox" checked onchange="compileStyles()"></div>
+            </div>
+            <div class="set-item">
+                <label>文字閃爍特效</label>
+                <div class="set-control"><input type="checkbox" id="set-blink" class="set-checkbox" onchange="compileStyles()"></div>
+            </div>
+            <div class="set-item">
+                <label>透明度 (淡化)</label>
+                <div class="set-control">
+                    <input type="range" id="set-opacity" class="set-range" min="0" max="1" step="0.1" value="1" oninput="updateBadge('opacity', ''); compileStyles()">
+                    <span id="badge-opacity" class="val-badge">1</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="set-card">
+            <h3 class="set-card-title">📏 尺寸與佈局</h3>
+            <div class="set-item">
+                <label>字體大小</label>
+                <div class="set-control">
+                    <input type="range" id="set-size" class="set-range" min="1" max="4" step="0.1" value="1.8" oninput="updateBadge('size', 'rem'); compileStyles()">
+                    <span id="badge-size" class="val-badge">1.8rem</span>
+                </div>
+            </div>
+            <div class="set-item">
+                <label>區塊寬度</label>
+                <div class="set-control">
+                    <input type="range" id="set-width" class="set-range" min="10" max="100" step="5" value="100" oninput="updateBadge('width', '%'); compileStyles()">
+                    <span id="badge-width" class="val-badge">100%</span>
+                </div>
+            </div>
+            <div class="set-item">
+                <label>橫直排版向</label>
+                <div class="set-control">
+                    <select id="set-writing-mode" class="set-select" onchange="compileStyles()">
+                        <option value="horizontal-tb">橫排 (預設)</option>
+                        <option value="vertical-rl">直排 (右至左)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="set-item">
+                <label>對齊方式</label>
+                <div class="set-control">
+                    <select id="set-align" class="set-select" onchange="compileStyles()">
+                        <option value="left">靠左對齊</option>
+                        <option value="center">置中對齊</option>
+                        <option value="right">靠右對齊</option>
+                        <option value="justify">分散對齊</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="set-card">
+            <h3 class="set-card-title">✨ 字體裝飾</h3>
+            <div class="set-item">
+                <label>加粗字體</label>
+                <div class="set-control"><input type="checkbox" id="set-bold" class="set-checkbox" checked onchange="compileStyles()"></div>
+            </div>
+            <div class="set-item">
+                <label>斜體風格</label>
+                <div class="set-control"><input type="checkbox" id="set-italic" class="set-checkbox" onchange="compileStyles()"></div>
+            </div>
+            <div class="set-item">
+                <label>文字底線</label>
+                <div class="set-control"><input type="checkbox" id="set-underline" class="set-checkbox" onchange="compileStyles()"></div>
+            </div>
+            <div class="set-item">
+                <label>前方插入符號</label>
+                <div class="set-control">
+                    <input type="text" id="set-symbol" class="set-input" placeholder="例: ⭐ 或 👉" oninput="compileStyles()">
+                </div>
+            </div>
+        </div>
+
+        <div class="set-card">
+            <h3 class="set-card-title">🎨 色彩與漸層</h3>
+            <div class="set-item">
+                <label>啟用漸層色彩</label>
+                <div class="set-control"><input type="checkbox" id="set-gradient-on" class="set-checkbox" onchange="compileStyles()"></div>
+            </div>
+            <div class="set-item">
+                <label>主顏色 / 漸層起點</label>
+                <div class="set-control"><input type="color" id="set-color1" class="set-color" value="#ffffff" oninput="compileStyles()"></div>
+            </div>
+            <div class="set-item">
+                <label>漸層終點顏色</label>
+                <div class="set-control"><input type="color" id="set-color2" class="set-color" value="#60a5fa" oninput="compileStyles()"></div>
+            </div>
+        </div>
+
+        <div class="set-card">
+            <h3 class="set-card-title">🔲 邊框樣式</h3>
+            <div class="set-item">
+                <label>邊框類型</label>
+                <div class="set-control">
+                    <select id="set-border-style" class="set-select" onchange="compileStyles()">
+                        <option value="none">無框線</option>
+                        <option value="solid">實線全框</option>
+                        <option value="dashed">虛線全框</option>
+                        <option value="bottom-only">僅底線裝飾</option>
+                    </select>
+                </div>
+            </div>
+            <div class="set-item">
+                <label>邊框粗細</label>
+                <div class="set-control">
+                    <input type="range" id="set-border-width" class="set-range" min="1" max="10" step="1" value="2" oninput="updateBadge('border-width', 'px'); compileStyles()">
+                    <span id="badge-border-width" class="val-badge">2px</span>
+                </div>
+            </div>
+            <div class="set-item">
+                <label>邊框顏色</label>
+                <div class="set-control"><input type="color" id="set-border-color" class="set-color" value="#60a5fa" oninput="compileStyles()"></div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -241,13 +439,9 @@
         messagingSenderId: "348466975949",
         appId: "1:348466975949:web:1f6f5483ce3c0f91a34584"
     };
-    
-    // 初始化 Firebase 與 Firestore
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    // ===============================================
 
-    // 原始備用資料
     const originalCSVData = [
         {code: "06005", name: "勝銓", company: "勝銓實業有限公司", contact: "楊勝銓", phone: "06-2011391", region: "台南", terms: "100天", lastOrder: "", daysAgo: "", perf: "", cases: "", visit: "", note: ""},
         {code: "06011", name: "惟鴻", company: "惟鴻工業有限公司", contact: "蕭惟鴻", phone: "0988-078065", region: "台南", terms: "85天T/T", lastOrder: "", daysAgo: "", perf: "", cases: "", visit: "", note: ""},
@@ -258,39 +452,24 @@
     let customers = [];
     let currentCustomer = null;
 
-    // 將日期格式轉換為 MM/DD (僅用於顯示)
     function formatDateToMMDD(dateStr) {
         if (!dateStr) return '無';
         const lowerStr = dateStr.toString().toLowerCase().trim();
         if (lowerStr === "new" || lowerStr === "nwe") return dateStr;
-
         const date = new Date(dateStr);
-        // 如果無法解析為正常日期，就退回原本的字串顯示
         if (isNaN(date.getTime())) return dateStr;
-
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
-        return `${mm}/${dd}`;
+        return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
     }
 
-    // 精準計算活躍度邏輯 (仍基於完整日期來準確計算天數)
     function calculateActivity(lastOrderStr) {
         if (!lastOrderStr) return "🔴久未下單"; 
-        
         const lowerStr = lastOrderStr.toString().toLowerCase().trim();
         if (lowerStr === "new" || lowerStr === "nwe") return "🆕️新案開發";
-
         const lastDate = new Date(lastOrderStr);
         if (isNaN(lastDate.getTime())) return "🔴久未下單";
-
         const today = new Date();
-        
-        const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-        const lastUTC = Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
-
-        const diffTime = todayUTC - lastUTC;
+        const diffTime = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - Date.UTC(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
         if (diffDays < 0) return "🟢正常下單"; 
         if (diffDays < 10) return "㊗️固定下單"; 
         if (diffDays >= 60) return "🔴久未下單"; 
@@ -300,50 +479,31 @@
     async function initSystem() {
         try {
             const querySnapshot = await db.collection('customers').get();
-            if (querySnapshot.empty) {
-                console.log("資料庫為空，使用預設資料。");
-                customers = originalCSVData.map(c => ({...c, products: []}));
-            } else {
-                customers = [];
-                querySnapshot.forEach((doc) => {
-                    customers.push({ id: doc.id, ...doc.data() });
-                });
-            }
-        } catch (error) {
-            console.error("資料庫讀取失敗：", error);
-            customers = originalCSVData.map(c => ({...c, products: []}));
-        }
-
+            if (querySnapshot.empty) { customers = originalCSVData.map(c => ({...c, products: []})); } 
+            else { querySnapshot.forEach(doc => customers.push({ id: doc.id, ...doc.data() })); }
+        } catch (error) { customers = originalCSVData.map(c => ({...c, products: []})); }
         renderMarquee();
         renderNav();
-        document.getElementById('display-card').innerHTML = "<h2>請選擇上方客戶查看資料</h2>";
+        document.getElementById('display-card').innerHTML = `<h2 id="dynamic-title">請選擇上方客戶查看資料</h2>`;
+        compileStyles();
     }
 
     function renderMarquee() {
-        const warningList = customers
-            .filter(c => calculateActivity(c.lastOrder) === "🔴久未下單")
-            .map(c => c.name);
-
-        const marqueeContainer = document.getElementById('marquee-container');
-        const marqueeContent = document.getElementById('marquee-content');
-
+        const warningList = customers.filter(c => calculateActivity(c.lastOrder) === "🔴久未下單").map(c => c.name);
+        const container = document.getElementById('marquee-container');
         if (warningList.length > 0) {
-            marqueeContainer.style.display = "block";
-            marqueeContent.textContent = `⚠️ 警告！以下客戶已久未下單：${warningList.join(' 、 ')} ⚠️`;
-        } else {
-            marqueeContainer.style.display = "none";
-        }
+            container.style.display = "block";
+            document.getElementById('marquee-content').textContent = `⚠️ 警告！以下客戶已久未下單：${warningList.join(' 、 ')} ⚠️`;
+        } else { container.style.display = "none"; }
     }
 
     function renderNav() {
         const nav = document.getElementById('navbar');
         nav.innerHTML = '';
-        
         customers.forEach((c, index) => {
             const item = document.createElement('div');
             item.className = 'nav-item';
             item.textContent = c.name;
-            
             item.addEventListener('click', () => {
                 document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
@@ -355,121 +515,206 @@
 
     function showCustomerData(index) {
         currentCustomer = customers[index];
-        const activity = calculateActivity(currentCustomer.lastOrder);
-        // 將顯示的日期轉為 MM/DD
         const displayDate = formatDateToMMDD(currentCustomer.lastOrder);
-        
-        const displayCard = document.getElementById('display-card');
-        displayCard.innerHTML = `
-            <h2>${currentCustomer.company || '無公司名稱'}</h2>
-            
+        document.getElementById('display-card').innerHTML = `
+            <h2 id="dynamic-title">${currentCustomer.company || '無公司名稱'}</h2>
             <div id="product-floating-box"></div>
-            
             <div class="data-row"><div class="label">客戶代號:</div><div>${currentCustomer.code || ''}</div></div>
             <div class="data-row"><div class="label">聯絡人:</div><div>${currentCustomer.contact || ''}</div></div>
             <div class="data-row"><div class="label">電話:</div><div>${currentCustomer.phone || ''}</div></div>
             <div class="data-row"><div class="label">地區:</div><div>${currentCustomer.region || ''}</div></div>
             <div class="data-row"><div class="label">付款條件:</div><div>${currentCustomer.terms || ''}</div></div>
             <div class="data-row"><div class="label">最後下單日:</div><div>${displayDate}</div></div>
-            <div class="data-row"><div class="label">訂單活躍度:</div><div style="font-weight:bold; font-size:1.2rem;">${activity}</div></div>
+            <div class="data-row"><div class="label">訂單活躍度:</div><div style="font-weight:bold; font-size:1.2rem;">${calculateActivity(currentCustomer.lastOrder)}</div></div>
             <div class="data-row"><div class="label">本年業績:</div><div>${currentCustomer.perf || ''}</div></div>
             <div class="data-row"><div class="label">目前案件數:</div><div>${currentCustomer.cases || ''}</div></div>
             <div class="data-row"><div class="label">下次拜訪日:</div><div>${currentCustomer.visit || ''}</div></div>
             <div class="data-row"><div class="label">備註:</div><div>${currentCustomer.note || ''}</div></div>
-            
             <div class="vertical-row">
-    <div class="label">維繫商品管理:</div>
-    <div class="input-group">
-        <input type="text" id="new-product-name" placeholder="輸入產品以新增，或輸入完全相符名稱以刪除">
-        <button class="btn-add" onclick="addProduct()">新增</button>
-        <button class="btn-delete" onclick="deleteProductByName()">刪除</button>
-    </div>
-</div>
+                <div class="label">維繫商品管理:</div>
+                <div class="input-group">
+                    <input type="text" id="new-product-name" placeholder="輸入產品以新增，完全相符以刪除">
+                    <button class="btn-add" onclick="addProduct()">新增</button>
+                    <button class="btn-delete" onclick="deleteProductByName()">刪除</button>
+                </div>
+            </div>
         `;
-
         renderProducts();
+        compileStyles();
     }
 
-    // 渲染維繫產品 (資料顯示於結構框內)
     function renderProducts() {
-        const floatingBox = document.getElementById('product-floating-box');
-        if (!floatingBox) return;
-
+        const box = document.getElementById('product-floating-box');
+        if (!box) return;
         const products = currentCustomer.products || [];
-
-        // 依要求換行顯示
         if (products.length > 0) {
-            floatingBox.style.display = "flex"; // 顯示區塊，下方資料會自動被往下擠
-            floatingBox.innerHTML = `
-                <div style="border-bottom: 1px solid rgba(255,255,0,0.4); padding-bottom: 3px; margin-bottom: 4px; font-size: 0.85rem; opacity: 0.8; width: 100%;">維繫商品：</div>
-                ${products.map(p => `<div style="word-break: break-all; margin-top: 2px;">${p}</div>`).join('')}
-            `;
-        } else {
-            floatingBox.style.display = "none"; // 沒資料時隱藏，不佔空間
-        }
+            box.style.display = "flex";
+            box.innerHTML = `<div style="border-bottom: 1px solid rgba(255,255,0,0.4); padding-bottom: 3px; margin-bottom: 4px; font-size: 0.85rem; width: 100%;">維繫商品：</div>
+                ${products.map(p => `<div style="word-break: break-all; margin-top: 2px;">${p}</div>`).join('')}`;
+        } else { box.style.display = "none"; }
     }
 
-    // 新增維繫產品並同步至 Firebase
     async function addProduct() {
         if(!currentCustomer) return;
-        const input = document.getElementById('new-product-name');
-        const val = input.value.trim();
+        const val = document.getElementById('new-product-name').value.trim();
         if(!val) return;
-
         if(!currentCustomer.products) currentCustomer.products = [];
-        
-        // 避免重複加入相同名稱
         if(!currentCustomer.products.includes(val)) {
-            currentCustomer.products.push(val);
-            input.value = '';
-            
-            await updateFirebaseProducts();
-            renderProducts();
-        } else {
-            alert('產品已存在！');
-        }
+            currentCustomer.products.push(val); document.getElementById('new-product-name').value = '';
+            await updateFirebaseProducts(); renderProducts();
+        } else alert('產品已存在！');
     }
 
-    // 刪除維繫產品 (輸入完全相符名稱刪除)
     async function deleteProductByName() {
         if(!currentCustomer) return;
-        const input = document.getElementById('new-product-name');
-        const val = input.value.trim();
+        const val = document.getElementById('new-product-name').value.trim();
         if(!val) return;
-
-        if(!currentCustomer.products || currentCustomer.products.length === 0) {
-            alert('目前無維繫商品可刪除！');
-            return;
-        }
-
+        if(!currentCustomer.products || currentCustomer.products.length === 0) return alert('目前無商品可刪除！');
         const index = currentCustomer.products.indexOf(val);
         if(index !== -1) {
-            currentCustomer.products.splice(index, 1);
-            input.value = '';
-            await updateFirebaseProducts();
-            renderProducts();
-        } else {
-            alert('找不到完全相符的產品名稱，無法刪除！請確認輸入是否正確。');
-        }
+            currentCustomer.products.splice(index, 1); document.getElementById('new-product-name').value = '';
+            await updateFirebaseProducts(); renderProducts();
+        } else alert('找不到完全相符的產品名稱！');
     }
 
-    // 更新 Firebase 中的維繫產品
     async function updateFirebaseProducts() {
-        if(!currentCustomer || !currentCustomer.id) {
-            console.error("無有效的 Document ID，無法同步至雲端資料庫（目前正使用本地預設資料）。");
-            return;
+        if(!currentCustomer || !currentCustomer.id) return console.error("無法同步");
+        try { await db.collection('customers').doc(currentCustomer.id).update({products: currentCustomer.products}); } 
+        catch (e) {}
+    }
+
+    // ==========================================
+    // 🌟 控制台：更新數值徽章
+    // ==========================================
+    function updateBadge(id, unit) {
+        const val = document.getElementById(`set-${id}`).value;
+        document.getElementById(`badge-${id}`).innerText = val + unit;
+    }
+
+    // ==========================================
+    // 🌟 控制台：標題排版即時編譯系統
+    // ==========================================
+    function compileStyles() {
+        const root = document.documentElement;
+        
+        const display = document.getElementById('set-display').checked ? 'block' : 'none';
+        const size = document.getElementById('set-size').value + 'rem';
+        const width = document.getElementById('set-width').value + '%';
+        const writingMode = document.getElementById('set-writing-mode').value;
+        const align = document.getElementById('set-align').value;
+        const color1 = document.getElementById('set-color1').value;
+        const color2 = document.getElementById('set-color2').value;
+        const isGradient = document.getElementById('set-gradient-on').checked;
+        const opacity = document.getElementById('set-opacity').value;
+        
+        const isBold = document.getElementById('set-bold').checked ? 'bold' : 'normal';
+        const isItalic = document.getElementById('set-italic').checked ? 'italic' : 'normal';
+        const isUnderline = document.getElementById('set-underline').checked ? 'underline' : 'none';
+        const symbol = `"${document.getElementById('set-symbol').value}"`;
+        
+        const borderStyleVal = document.getElementById('set-border-style').value;
+        const borderWidth = document.getElementById('set-border-width').value + 'px';
+        const borderColor = document.getElementById('set-border-color').value;
+
+        root.style.setProperty('--h2-display', display);
+        root.style.setProperty('--h2-font-size', size);
+        root.style.setProperty('--h2-width', width);
+        root.style.setProperty('--h2-writing-mode', writingMode);
+        root.style.setProperty('--h2-text-align', align);
+        root.style.setProperty('--h2-font-weight', isBold);
+        root.style.setProperty('--h2-font-style', isItalic);
+        root.style.setProperty('--h2-text-decoration', isUnderline);
+        root.style.setProperty('--h2-symbol', symbol);
+        root.style.setProperty('--h2-opacity', opacity);
+
+        if (isGradient) {
+            root.style.setProperty('--h2-bg', `linear-gradient(90deg, ${color1}, ${color2})`);
+            root.style.setProperty('--h2-bg-clip', 'text');
+            root.style.setProperty('--h2-text-fill', 'transparent');
+            root.style.setProperty('--h2-color', color1); 
+        } else {
+            root.style.setProperty('--h2-bg', 'transparent');
+            root.style.setProperty('--h2-bg-clip', 'border-box');
+            root.style.setProperty('--h2-text-fill', color1);
+            root.style.setProperty('--h2-color', color1);
         }
-        try {
-            await db.collection('customers').doc(currentCustomer.id).update({
-                products: currentCustomer.products
-            });
-            console.log("雲端產品更新成功");
-        } catch (error) {
-            console.error("Firebase 產品更新失敗", error);
+
+        if (borderStyleVal === 'none') {
+            root.style.setProperty('--h2-border-style', 'none');
+            root.style.setProperty('--h2-border-width', '0');
+        } else if (borderStyleVal === 'bottom-only') {
+            root.style.setProperty('--h2-border-style', 'none none solid none');
+            root.style.setProperty('--h2-border-width', borderWidth);
+            root.style.setProperty('--h2-border-color', borderColor);
+        } else {
+            root.style.setProperty('--h2-border-style', borderStyleVal);
+            root.style.setProperty('--h2-border-width', borderWidth);
+            root.style.setProperty('--h2-border-color', borderColor);
+        }
+
+        const titleEl = document.getElementById('dynamic-title');
+        if(titleEl) {
+            if(document.getElementById('set-blink').checked) {
+                titleEl.classList.add('h2-blink-active');
+            } else {
+                titleEl.classList.remove('h2-blink-active');
+            }
         }
     }
 
-    // 初始化執行
+    function toggleSettings(show) {
+        document.getElementById('settings-modal').style.display = show ? 'flex' : 'none';
+    }
+
+    // ==========================================
+    // 🌟 懸浮按鈕拖曳邏輯
+    // ==========================================
+    const fab = document.getElementById('settings-fab');
+    let isDragging = false;
+    let dragStartX, dragStartY, initialLeft, initialTop;
+
+    fab.addEventListener('mousedown', startDrag);
+    fab.addEventListener('touchstart', startDrag, {passive: false});
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag, {passive: false});
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+
+    fab.addEventListener('click', (e) => {
+        if (isDragging) { e.preventDefault(); return; }
+        toggleSettings(true);
+    });
+
+    function startDrag(e) {
+        if(e.type === 'touchstart') { dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY; } 
+        else { dragStartX = e.clientX; dragStartY = e.clientY; }
+        initialLeft = fab.offsetLeft; initialTop = fab.offsetTop;
+        isDragging = false; 
+    }
+
+    function drag(e) {
+        if (dragStartX === undefined) return;
+        let clientX, clientY;
+        if(e.type === 'touchmove') { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } 
+        else { clientX = e.clientX; clientY = e.clientY; }
+
+        if (!isDragging && (Math.abs(clientX - dragStartX) > 5 || Math.abs(clientY - dragStartY) > 5)) {
+            isDragging = true;
+        }
+
+        if (isDragging) {
+            e.preventDefault();
+            fab.style.left = initialLeft + (clientX - dragStartX) + 'px';
+            fab.style.top = initialTop + (clientY - dragStartY) + 'px';
+            fab.style.bottom = 'auto'; fab.style.right = 'auto';
+        }
+    }
+
+    function endDrag() {
+        dragStartX = undefined; dragStartY = undefined;
+        setTimeout(() => { isDragging = false; }, 50); 
+    }
+
     initSystem();
 </script>
 
