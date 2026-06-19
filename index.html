@@ -149,7 +149,9 @@
             align-items: start;
         }
 
-        .label { color: var(--accent); font-weight: bold; }
+        .label { 
+        color: var(--accent); 
+        font-weight: bold; }
         
         /* 移除原本為了閃避懸浮框而設定的 padding-right: 200px */
         h2 { 
@@ -161,15 +163,57 @@
         }
 
         /* 輸入框與按鈕樣式 */
-        .input-group { display: flex; gap: 8px; width: 100%; }
-        .input-group input { flex: 1; padding: 8px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-size: 1rem;}
-        .input-group input:focus { outline: 1px solid var(--accent); }
+        .input-group { 
+        display: flex; 
+        gap: 8px; 
+        width: 100%; }
+        .input-group input {
+         box-sizing: border-box; /* 這非常重要！ */
+         width: 60%;
+         padding: 8px 12px; 
+         border-radius: 6px;    
+         border: none; 
+         background: rgba(255,255,255,0.1); 
+         color: white; 
+         font-size: 1rem;}
+        .input-group input:focus { 
+        outline: 1px solid var(--accent); }
         
-        .btn-add { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s;}
-        .btn-add:hover { background: #059669; }
+        .btn-add { 
+        background: #10b981; 
+        color: white; 
+        border: none; 
+        padding: 8px 16px; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        font-weight: bold; 
+        font-size: 1rem; 
+        transition: background 0.2s;}
+        .btn-add:hover { 
+        background: #059669; }
         
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s;}
-        .btn-delete:hover { background: #dc2626; }
+        .btn-delete { 
+        background: #ef4444; 
+        color: white; 
+        border: none; 
+        padding: 8px 16px; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        font-weight: bold; 
+        font-size: 1rem; 
+        transition: background 0.2s;}
+        .btn-delete:hover { 
+        background: #dc2626; }
+        
+        /* 新增這個樣式來強制直向排列 */
+         .vertical-row {
+         display: flex;
+         flex-direction: column; /* 強制直向 */
+         gap: 15px;               /* 標籤與輸入框的間距 */
+         margin-bottom: 20px;
+         border-bottom: none;    /* 如果不需要底線 */
+}
+        
     </style>
 </head>
 <body>
@@ -333,14 +377,14 @@
             <div class="data-row"><div class="label">下次拜訪日:</div><div>${currentCustomer.visit || ''}</div></div>
             <div class="data-row"><div class="label">備註:</div><div>${currentCustomer.note || ''}</div></div>
             
-            <div class="data-row" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">
-                <div class="label">維繫商品管理:</div>
-                <div class="input-group">
-                    <input type="text" id="new-product-name" placeholder="輸入產品以新增，或輸入完全相符名稱以刪除">
-                    <button class="btn-add" onclick="addProduct()">新增</button>
-                    <button class="btn-delete" onclick="deleteProductByName()">刪除</button>
-                </div>
-            </div>
+            <div class="vertical-row">
+    <div class="label">維繫商品管理:</div>
+    <div class="input-group">
+        <input type="text" id="new-product-name" placeholder="輸入產品以新增，或輸入完全相符名稱以刪除">
+        <button class="btn-add" onclick="addProduct()">新增</button>
+        <button class="btn-delete" onclick="deleteProductByName()">刪除</button>
+    </div>
+</div>
         `;
 
         renderProducts();
