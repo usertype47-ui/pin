@@ -111,24 +111,21 @@
             box-sizing: border-box;
         }
 
-        /* 懸浮維繫產品框：往上一點點、直式排列 */
+        /* 🌟 重點修改：黃色產品框改為結構元素，移除 absolute，加入 100% 寬度與下邊距 */
         #product-floating-box {
-            position: absolute;
-            top: 15px; 
-            right: 40px;
             background: rgba(15, 23, 42, 0.95);
             border: 2px solid yellow;
-            padding: 10px 16px;
+            padding: 15px;
             border-radius: 10px;
-            width: max-content;
-            max-width: 220px;
-            display: none; 
-            z-index: 10;
+            width: 100%;               /* 讓它填滿卡片寬度 */
+            box-sizing: border-box;
+            display: none;             /* 預設隱藏，由 JS 決定顯示 */
             box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
             color: yellow;
             font-weight: bold;
             font-size: 0.95rem;
             animation: blink 1.5s infinite;
+            margin-bottom: 20px;       /* 往下推開後方的資料欄位 */
             
             /* 直式佈局 */
             flex-direction: column;
@@ -154,37 +151,18 @@
 
         .label { color: var(--accent); font-weight: bold; }
         
+        /* 移除原本為了閃避懸浮框而設定的 padding-right: 200px */
         h2 { 
-    margin-top: 0; 
-    color: #fff; 
-    background: rgba(96, 165, 250, 0.2); 
-    padding: 10px 20px;
-    border-radius: 8px;
-    border-bottom: none; 
-    font-size: 1.4rem; /* 微調字體大小，配合縮短寬度 */
-    margin-bottom: 20px;
-    
-    /* === 關鍵編譯設定 === */
-    width: fit-content;    /* 寬度隨文字內容自動收縮 */
-    min-width: 120px;      /* 設定最小寬度，避免太窄 */
-    max-width: 55%;        /* 設定最大寬度，避免爆版 */
-    margin-left: 0;        /* 強制向左靠齊 */
-    margin-right: auto;    /* 確保右邊推開 */
-    box-sizing: border-box;
-}
-        #company-title {
-    display: none; /* 直接隱藏該元素 */
-}
-         /* 若移除 h2，建議增加 .card 內部的頂部填充 (padding-top) */
-.card {
-    /* ...原有設定... */
-    padding-top: 200px; /* 根據需求調整，留出空間 */
-}
+            margin-top: 0; 
+            color: #fff; 
+            border-bottom: 2px solid var(--accent); 
+            padding-bottom: 10px; 
+            margin-bottom: 25px;
+        }
 
-        
         /* 輸入框與按鈕樣式 */
         .input-group { display: flex; gap: 8px; width: 100%; }
-        .input-group input { width: 150px; padding: 8px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-size: 1rem;}
+        .input-group input { flex: 1; padding: 8px 12px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white; font-size: 1rem;}
         .input-group input:focus { outline: 1px solid var(--accent); }
         
         .btn-add { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background 0.2s;}
@@ -339,8 +317,10 @@
         
         const displayCard = document.getElementById('display-card');
         displayCard.innerHTML = `
+            <h2>${currentCustomer.company || '無公司名稱'}</h2>
+            
             <div id="product-floating-box"></div>
-            <h2 id="company-title">${currentCustomer.company || '無公司名稱'}</h2>
+            
             <div class="data-row"><div class="label">客戶代號:</div><div>${currentCustomer.code || ''}</div></div>
             <div class="data-row"><div class="label">聯絡人:</div><div>${currentCustomer.contact || ''}</div></div>
             <div class="data-row"><div class="label">電話:</div><div>${currentCustomer.phone || ''}</div></div>
@@ -354,36 +334,34 @@
             <div class="data-row"><div class="label">備註:</div><div>${currentCustomer.note || ''}</div></div>
             
             <div class="data-row" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0;">
-               <div class="data-row" style="display: flex; flex-direction: column; gap: 8px; border-bottom: none; padding-bottom: 0; margin-bottom: 0;">
-    <div class="label">維繫商品管理:</div>
-    <div class="input-group">
-        <input type="text" id="new-product-name" placeholder="輸入產品以新增，或輸入完全相符名稱以刪除">
-        <button class="btn-add" onclick="addProduct()">新增</button>
-        <button class="btn-delete" onclick="deleteProductByName()">刪除</button>
-    </div>
-</div>
-
+                <div class="label">維繫商品管理:</div>
+                <div class="input-group">
+                    <input type="text" id="new-product-name" placeholder="輸入產品以新增，或輸入完全相符名稱以刪除">
+                    <button class="btn-add" onclick="addProduct()">新增</button>
+                    <button class="btn-delete" onclick="deleteProductByName()">刪除</button>
+                </div>
+            </div>
         `;
 
         renderProducts();
     }
 
-    // 渲染維繫產品 (資料僅顯示於懸浮框)
+    // 渲染維繫產品 (資料顯示於結構框內)
     function renderProducts() {
         const floatingBox = document.getElementById('product-floating-box');
         if (!floatingBox) return;
 
         const products = currentCustomer.products || [];
 
-        // 依要求直接換行顯示，無圓點符號
+        // 依要求換行顯示
         if (products.length > 0) {
-            floatingBox.style.display = "flex";
+            floatingBox.style.display = "flex"; // 顯示區塊，下方資料會自動被往下擠
             floatingBox.innerHTML = `
                 <div style="border-bottom: 1px solid rgba(255,255,0,0.4); padding-bottom: 3px; margin-bottom: 4px; font-size: 0.85rem; opacity: 0.8; width: 100%;">維繫商品：</div>
                 ${products.map(p => `<div style="word-break: break-all; margin-top: 2px;">${p}</div>`).join('')}
             `;
         } else {
-            floatingBox.style.display = "none";
+            floatingBox.style.display = "none"; // 沒資料時隱藏，不佔空間
         }
     }
 
